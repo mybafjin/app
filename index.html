@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Mini Runner Game</title>
+<title>Banana Runner</title>
 
 <style>
 body{
@@ -13,13 +13,13 @@ body{
 }
 
 #game{
-    width:400px;
-    height:600px;
+    width:420px;
+    height:650px;
     margin:auto;
     background:#6ec1ff;
     position:relative;
     overflow:hidden;
-    border:4px solid white;
+    border:5px solid white;
 }
 
 #road{
@@ -28,38 +28,53 @@ body{
     height:200%;
     background:repeating-linear-gradient(
         #555 0px,
-        #555 60px,
-        #777 60px,
-        #777 120px
+        #555 80px,
+        #777 80px,
+        #777 160px
     );
 }
 
 #player{
     width:50px;
-    height:60px;
+    height:70px;
     background:yellow;
-    border-radius:15px;
+    border-radius:20px;
+    border:3px solid black;
     position:absolute;
     bottom:80px;
-    left:175px;
-    border:3px solid black;
+    left:185px;
+    transition:left 0.2s;
 }
 
-.coin{
-    width:25px;
-    height:25px;
+.jump{
+    animation:jump 0.6s;
+}
+
+@keyframes jump{
+    0%{bottom:80px}
+    50%{bottom:200px}
+    100%{bottom:80px}
+}
+
+.slide{
+    height:35px;
+}
+
+.banana{
+    width:30px;
+    height:20px;
     background:gold;
-    border-radius:50%;
+    border-radius:20px;
     position:absolute;
-    top:-30px;
+    top:-40px;
 }
 
 .obstacle{
     width:50px;
-    height:50px;
+    height:60px;
     background:red;
     position:absolute;
-    top:-60px;
+    top:-80px;
 }
 
 #score{
@@ -75,135 +90,157 @@ body{
 <body>
 
 <div id="game">
-
 <div id="road"></div>
 <div id="player"></div>
-<div id="score">Score:0</div>
-
+<div id="score">Bananas:0</div>
 </div>
 
 <script>
 
-const player = document.getElementById("player");
 const game = document.getElementById("game");
+const player = document.getElementById("player");
 const road = document.getElementById("road");
 const scoreText = document.getElementById("score");
 
-let score = 0;
-let speed = 4;
-let keys = {};
-let roadY = 0;
+const lanes=[60,185,310];
+let lane=1;
+
+let bananas=[];
+let obstacles=[];
+
+let score=0;
+let speed=4;
+let roadY=0;
+
+let jumping=false;
+let sliding=false;
 
 document.addEventListener("keydown",e=>{
-    keys[e.key]=true;
+
+if(e.key==="ArrowLeft" && lane>0){
+lane--;
+player.style.left=lanes[lane]+"px";
+}
+
+if(e.key==="ArrowRight" && lane<2){
+lane++;
+player.style.left=lanes[lane]+"px";
+}
+
+if(e.key==="ArrowUp" && !jumping){
+jump();
+}
+
+if(e.key==="ArrowDown" && !sliding){
+slide();
+}
+
 });
 
-document.addEventListener("keyup",e=>{
-    keys[e.key]=false;
-});
+function jump(){
+jumping=true;
+player.classList.add("jump");
 
-game.addEventListener("click",()=>{
-    if(player.offsetLeft < 200){
-        player.style.left="300px";
-    }else{
-        player.style.left="50px";
-    }
-});
+setTimeout(()=>{
+player.classList.remove("jump");
+jumping=false;
+},600);
+}
 
-function createCoin(){
+function slide(){
+sliding=true;
+player.classList.add("slide");
 
-    const coin=document.createElement("div");
-    coin.classList.add("coin");
+setTimeout(()=>{
+player.classList.remove("slide");
+sliding=false;
+},600);
+}
 
-    coin.style.left=Math.floor(Math.random()*360)+"px";
+function createBanana(){
 
-    game.appendChild(coin);
-    return coin;
+const banana=document.createElement("div");
+banana.classList.add("banana");
+
+let laneIndex=Math.floor(Math.random()*3);
+banana.dataset.lane=laneIndex;
+
+banana.style.left=lanes[laneIndex]+"px";
+
+game.appendChild(banana);
+bananas.push(banana);
 }
 
 function createObstacle(){
 
-    const obs=document.createElement("div");
-    obs.classList.add("obstacle");
+const obs=document.createElement("div");
+obs.classList.add("obstacle");
 
-    obs.style.left=Math.floor(Math.random()*350)+"px";
+let laneIndex=Math.floor(Math.random()*3);
+obs.dataset.lane=laneIndex;
 
-    game.appendChild(obs);
-    return obs;
+obs.style.left=lanes[laneIndex]+"px";
+
+game.appendChild(obs);
+obstacles.push(obs);
 }
 
-let coins=[];
-let obstacles=[];
-
-setInterval(()=>{
-    coins.push(createCoin());
-},1200);
-
-setInterval(()=>{
-    obstacles.push(createObstacle());
-},2000);
+setInterval(createBanana,1200);
+setInterval(createObstacle,2000);
 
 function gameLoop(){
 
-    if(keys["ArrowLeft"]){
-        player.style.left=
-        Math.max(0,player.offsetLeft-6)+"px";
-    }
+roadY+=speed;
+road.style.top=-(roadY%160)+"px";
 
-    if(keys["ArrowRight"]){
-        player.style.left=
-        Math.min(350,player.offsetLeft+6)+"px";
-    }
+speed+=0.0005;
 
-    roadY+=speed;
-    road.style.top=-(roadY%120)+"px";
+bananas.forEach((banana,i)=>{
 
-    coins.forEach((coin,i)=>{
+banana.style.top=banana.offsetTop+speed+"px";
 
-        coin.style.top=coin.offsetTop+speed+"px";
+if(checkCollision(player,banana)){
+score+=1;
+banana.remove();
+bananas.splice(i,1);
+}
 
-        if(checkCollision(player,coin)){
-            score+=10;
-            coin.remove();
-            coins.splice(i,1);
-        }
+if(banana.offsetTop>650){
+banana.remove();
+bananas.splice(i,1);
+}
 
-        if(coin.offsetTop>600){
-            coin.remove();
-            coins.splice(i,1);
-        }
+});
 
-    });
+obstacles.forEach((obs,i)=>{
 
-    obstacles.forEach((obs,i)=>{
+obs.style.top=obs.offsetTop+speed+"px";
 
-        obs.style.top=obs.offsetTop+speed+"px";
+if(checkCollision(player,obs)){
+alert("Game Over! Bananas:"+score);
+location.reload();
+}
 
-        if(checkCollision(player,obs)){
-            alert("Game Over! Score:"+score);
-            location.reload();
-        }
+if(obs.offsetTop>650){
+obs.remove();
+obstacles.splice(i,1);
+}
 
-        if(obs.offsetTop>600){
-            obs.remove();
-            obstacles.splice(i,1);
-        }
+});
 
-    });
+scoreText.textContent="Bananas:"+score;
 
-    scoreText.textContent="Score:"+score;
-
-    requestAnimationFrame(gameLoop);
+requestAnimationFrame(gameLoop);
 }
 
 function checkCollision(a,b){
 
-    return !(
-        a.offsetTop + a.offsetHeight < b.offsetTop ||
-        a.offsetTop > b.offsetTop + b.offsetHeight ||
-        a.offsetLeft + a.offsetWidth < b.offsetLeft ||
-        a.offsetLeft > b.offsetLeft + b.offsetWidth
-    );
+return !(
+a.offsetTop + a.offsetHeight < b.offsetTop ||
+a.offsetTop > b.offsetTop + b.offsetHeight ||
+a.offsetLeft + a.offsetWidth < b.offsetLeft ||
+a.offsetLeft > b.offsetLeft + b.offsetWidth
+);
 
 }
 
@@ -213,4 +250,3 @@ gameLoop();
 
 </body>
 </html>
-
