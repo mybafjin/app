@@ -2,24 +2,24 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Mini Kart Game</title>
+<title>Mini Runner Game</title>
 
 <style>
 body{
     margin:0;
+    background:#87CEEB;
     overflow:hidden;
-    background:#333;
     font-family:sans-serif;
 }
 
 #game{
     width:400px;
     height:600px;
-    background:#555;
     margin:auto;
+    background:#6ec1ff;
     position:relative;
     overflow:hidden;
-    border:5px solid white;
+    border:4px solid white;
 }
 
 #road{
@@ -28,29 +28,38 @@ body{
     height:200%;
     background:repeating-linear-gradient(
         #555 0px,
-        #555 40px,
-        #fff 40px,
-        #fff 60px
+        #555 60px,
+        #777 60px,
+        #777 120px
     );
 }
 
 #player{
-    width:40px;
+    width:50px;
     height:60px;
-    background:red;
+    background:yellow;
+    border-radius:15px;
     position:absolute;
-    bottom:40px;
-    left:180px;
-    border-radius:10px;
+    bottom:80px;
+    left:175px;
+    border:3px solid black;
 }
 
-.enemy{
-    width:40px;
-    height:60px;
-    background:blue;
+.coin{
+    width:25px;
+    height:25px;
+    background:gold;
+    border-radius:50%;
     position:absolute;
-    top:-80px;
-    border-radius:10px;
+    top:-30px;
+}
+
+.obstacle{
+    width:50px;
+    height:50px;
+    background:red;
+    position:absolute;
+    top:-60px;
 }
 
 #score{
@@ -68,9 +77,7 @@ body{
 <div id="game">
 
 <div id="road"></div>
-
 <div id="player"></div>
-
 <div id="score">Score:0</div>
 
 </div>
@@ -82,10 +89,10 @@ const game = document.getElementById("game");
 const road = document.getElementById("road");
 const scoreText = document.getElementById("score");
 
-let keys = {};
-let speed = 5;
-let roadY = 0;
 let score = 0;
+let speed = 4;
+let keys = {};
+let roadY = 0;
 
 document.addEventListener("keydown",e=>{
     keys[e.key]=true;
@@ -95,59 +102,91 @@ document.addEventListener("keyup",e=>{
     keys[e.key]=false;
 });
 
-function createEnemy(){
+game.addEventListener("click",()=>{
+    if(player.offsetLeft < 200){
+        player.style.left="300px";
+    }else{
+        player.style.left="50px";
+    }
+});
 
-    const enemy = document.createElement("div");
-    enemy.classList.add("enemy");
+function createCoin(){
 
-    enemy.style.left = Math.floor(Math.random()*360)+"px";
+    const coin=document.createElement("div");
+    coin.classList.add("coin");
 
-    game.appendChild(enemy);
+    coin.style.left=Math.floor(Math.random()*360)+"px";
 
-    return enemy;
+    game.appendChild(coin);
+    return coin;
 }
 
-let enemies = [];
+function createObstacle(){
+
+    const obs=document.createElement("div");
+    obs.classList.add("obstacle");
+
+    obs.style.left=Math.floor(Math.random()*350)+"px";
+
+    game.appendChild(obs);
+    return obs;
+}
+
+let coins=[];
+let obstacles=[];
 
 setInterval(()=>{
-    enemies.push(createEnemy());
-},1500);
+    coins.push(createCoin());
+},1200);
+
+setInterval(()=>{
+    obstacles.push(createObstacle());
+},2000);
 
 function gameLoop(){
 
     if(keys["ArrowLeft"]){
-        player.style.left =
-        Math.max(0,player.offsetLeft-5)+"px";
+        player.style.left=
+        Math.max(0,player.offsetLeft-6)+"px";
     }
 
     if(keys["ArrowRight"]){
-        player.style.left =
-        Math.min(360,player.offsetLeft+5)+"px";
-    }
-
-    if(keys["ArrowUp"]){
-        speed=8;
-    }else{
-        speed=5;
+        player.style.left=
+        Math.min(350,player.offsetLeft+6)+"px";
     }
 
     roadY+=speed;
-    road.style.top = -(roadY%60)+"px";
+    road.style.top=-(roadY%120)+"px";
 
-    enemies.forEach((enemy,i)=>{
+    coins.forEach((coin,i)=>{
 
-        enemy.style.top =
-        enemy.offsetTop+speed+"px";
+        coin.style.top=coin.offsetTop+speed+"px";
 
-        if(enemy.offsetTop>600){
-            enemy.remove();
-            enemies.splice(i,1);
+        if(checkCollision(player,coin)){
             score+=10;
+            coin.remove();
+            coins.splice(i,1);
         }
 
-        if(checkCollision(player,enemy)){
+        if(coin.offsetTop>600){
+            coin.remove();
+            coins.splice(i,1);
+        }
+
+    });
+
+    obstacles.forEach((obs,i)=>{
+
+        obs.style.top=obs.offsetTop+speed+"px";
+
+        if(checkCollision(player,obs)){
             alert("Game Over! Score:"+score);
             location.reload();
+        }
+
+        if(obs.offsetTop>600){
+            obs.remove();
+            obstacles.splice(i,1);
         }
 
     });
@@ -174,3 +213,4 @@ gameLoop();
 
 </body>
 </html>
+
