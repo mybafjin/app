@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Mini Kart Game</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#333;
+    font-family:sans-serif;
+}
+
+#game{
+    width:400px;
+    height:600px;
+    background:#555;
+    margin:auto;
+    position:relative;
+    overflow:hidden;
+    border:5px solid white;
+}
+
+#road{
+    position:absolute;
+    width:100%;
+    height:200%;
+    background:repeating-linear-gradient(
+        #555 0px,
+        #555 40px,
+        #fff 40px,
+        #fff 60px
+    );
+}
+
+#player{
+    width:40px;
+    height:60px;
+    background:red;
+    position:absolute;
+    bottom:40px;
+    left:180px;
+    border-radius:10px;
+}
+
+.enemy{
+    width:40px;
+    height:60px;
+    background:blue;
+    position:absolute;
+    top:-80px;
+    border-radius:10px;
+}
+
+#score{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div id="road"></div>
+
+<div id="player"></div>
+
+<div id="score">Score:0</div>
+
+</div>
+
+<script>
+
+const player = document.getElementById("player");
+const game = document.getElementById("game");
+const road = document.getElementById("road");
+const scoreText = document.getElementById("score");
+
+let keys = {};
+let speed = 5;
+let roadY = 0;
+let score = 0;
+
+document.addEventListener("keydown",e=>{
+    keys[e.key]=true;
+});
+
+document.addEventListener("keyup",e=>{
+    keys[e.key]=false;
+});
+
+function createEnemy(){
+
+    const enemy = document.createElement("div");
+    enemy.classList.add("enemy");
+
+    enemy.style.left = Math.floor(Math.random()*360)+"px";
+
+    game.appendChild(enemy);
+
+    return enemy;
+}
+
+let enemies = [];
+
+setInterval(()=>{
+    enemies.push(createEnemy());
+},1500);
+
+function gameLoop(){
+
+    if(keys["ArrowLeft"]){
+        player.style.left =
+        Math.max(0,player.offsetLeft-5)+"px";
+    }
+
+    if(keys["ArrowRight"]){
+        player.style.left =
+        Math.min(360,player.offsetLeft+5)+"px";
+    }
+
+    if(keys["ArrowUp"]){
+        speed=8;
+    }else{
+        speed=5;
+    }
+
+    roadY+=speed;
+    road.style.top = -(roadY%60)+"px";
+
+    enemies.forEach((enemy,i)=>{
+
+        enemy.style.top =
+        enemy.offsetTop+speed+"px";
+
+        if(enemy.offsetTop>600){
+            enemy.remove();
+            enemies.splice(i,1);
+            score+=10;
+        }
+
+        if(checkCollision(player,enemy)){
+            alert("Game Over! Score:"+score);
+            location.reload();
+        }
+
+    });
+
+    scoreText.textContent="Score:"+score;
+
+    requestAnimationFrame(gameLoop);
+}
+
+function checkCollision(a,b){
+
+    return !(
+        a.offsetTop + a.offsetHeight < b.offsetTop ||
+        a.offsetTop > b.offsetTop + b.offsetHeight ||
+        a.offsetLeft + a.offsetWidth < b.offsetLeft ||
+        a.offsetLeft > b.offsetLeft + b.offsetWidth
+    );
+
+}
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
