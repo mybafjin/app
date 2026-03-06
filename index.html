@@ -2,57 +2,62 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ボクシングゲーム</title>
+<title>ボクシング対戦ゲーム</title>
+
 <style>
+
 body{
-    margin:0;
-    background:#222;
-    color:white;
-    font-family:sans-serif;
-    text-align:center;
+background:#111;
+color:white;
+font-family:sans-serif;
+text-align:center;
 }
 
 h1{
-    margin:10px;
+margin:10px;
 }
 
 #game{
-    position:relative;
-    width:900px;
-    height:400px;
-    margin:auto;
-    background:linear-gradient(#555,#333);
-    border:4px solid white;
-    overflow:hidden;
+position:relative;
+width:900px;
+height:420px;
+margin:auto;
+background:linear-gradient(#555,#222);
+border:4px solid white;
+overflow:hidden;
 }
 
-.player{
-    position:absolute;
-    width:50px;
-    height:80px;
-    bottom:0;
+.fighter{
+position:absolute;
+bottom:0;
+width:80px;
+height:140px;
 }
-
-#p1{ background:red; }
-#p2{ background:blue; }
 
 .health{
-    width:400px;
-    height:20px;
-    background:#444;
-    margin:5px auto;
-    border:2px solid white;
+width:400px;
+height:20px;
+background:#333;
+margin:auto;
+border:2px solid white;
 }
 
 .bar{
-    height:100%;
-    background:lime;
+height:100%;
+background:lime;
 }
 
 #result{
-    font-size:30px;
-    margin-top:10px;
+font-size:30px;
+margin-top:10px;
 }
+
+canvas{
+position:absolute;
+left:0;
+top:0;
+}
+
 </style>
 </head>
 
@@ -60,135 +65,188 @@ h1{
 
 <h1>🥊 ボクシングゲーム</h1>
 
-<div>Player1</div>
+<div>赤（朝倉未来風）</div>
 <div class="health"><div id="hp1" class="bar"></div></div>
 
-<div>Player2</div>
+<div>青（デヴィ夫人風）</div>
 <div class="health"><div id="hp2" class="bar"></div></div>
 
 <div id="game">
-<div id="p1" class="player"></div>
-<div id="p2" class="player"></div>
+<canvas id="canvas" width="900" height="420"></canvas>
 </div>
 
 <div id="result"></div>
 
 <script>
 
-const gameWidth = 900;
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
 
-const p1 = {
-    el:document.getElementById("p1"),
-    x:100,
-    y:0,
-    vy:0,
-    hp:100,
-    attacking:false
-};
+const gravity = 0.7
 
-const p2 = {
-    el:document.getElementById("p2"),
-    x:700,
-    y:0,
-    vy:0,
-    hp:100,
-    attacking:false
-};
+const p1={
+x:200,
+y:0,
+vy:0,
+hp:100,
+combo:0,
+attack:false,
+color:"red",
+face:"未来風"
+}
 
-const hp1bar = document.getElementById("hp1");
-const hp2bar = document.getElementById("hp2");
-const result = document.getElementById("result");
+const p2={
+x:650,
+y:0,
+vy:0,
+hp:100,
+combo:0,
+attack:false,
+color:"blue",
+face:"夫人風"
+}
 
-let keys = {};
+const hp1=document.getElementById("hp1")
+const hp2=document.getElementById("hp2")
+const result=document.getElementById("result")
 
-document.addEventListener("keydown",e=>keys[e.key]=true);
-document.addEventListener("keyup",e=>keys[e.key]=false);
+let keys={}
 
-function update(){
+document.addEventListener("keydown",e=>keys[e.key]=true)
+document.addEventListener("keyup",e=>keys[e.key]=false)
 
-    // Player1 movement
-    if(keys["a"]) p1.x -=5;
-    if(keys["d"]) p1.x +=5;
+function drawFighter(p){
 
-    if(keys["w"] && p1.y===0){
-        p1.vy = 12;
-    }
+let baseY = 350 - p.y
 
-    if(keys["f"] && !p1.attacking){
-        punch(p1,p2);
-    }
+ctx.strokeStyle="white"
+ctx.lineWidth=4
 
-    // Player2 movement
-    if(keys["ArrowLeft"]) p2.x -=5;
-    if(keys["ArrowRight"]) p2.x +=5;
+// body
+ctx.beginPath()
+ctx.moveTo(p.x,baseY)
+ctx.lineTo(p.x,baseY-60)
+ctx.stroke()
 
-    if(keys["ArrowUp"] && p2.y===0){
-        p2.vy = 12;
-    }
+// legs
+ctx.beginPath()
+ctx.moveTo(p.x,baseY)
+ctx.lineTo(p.x-15,baseY+30)
+ctx.moveTo(p.x,baseY)
+ctx.lineTo(p.x+15,baseY+30)
+ctx.stroke()
 
-    if(keys["/"] && !p2.attacking){
-        punch(p2,p1);
-    }
+// arms
+ctx.beginPath()
 
-    physics(p1);
-    physics(p2);
+if(p.attack){
+ctx.moveTo(p.x,baseY-40)
+ctx.lineTo(p.x+40,baseY-40)
+}else{
+ctx.moveTo(p.x,baseY-40)
+ctx.lineTo(p.x+20,baseY-20)
+}
 
-    draw(p1);
-    draw(p2);
+ctx.moveTo(p.x,baseY-40)
+ctx.lineTo(p.x-20,baseY-20)
+ctx.stroke()
 
-    hp1bar.style.width = p1.hp + "%";
-    hp2bar.style.width = p2.hp + "%";
+// head
+ctx.beginPath()
+ctx.arc(p.x,baseY-80,18,0,Math.PI*2)
+ctx.fillStyle=p.color
+ctx.fill()
 
-    if(p1.hp<=0){
-        result.textContent="Player2 勝利！";
-        return;
-    }
+ctx.fillStyle="white"
+ctx.font="10px sans-serif"
+ctx.fillText(p.face,p.x-18,baseY-80)
 
-    if(p2.hp<=0){
-        result.textContent="Player1 勝利！";
-        return;
-    }
-
-    requestAnimationFrame(update);
 }
 
 function physics(p){
-    p.y += p.vy;
-    p.vy -=0.6;
 
-    if(p.y <0){
-        p.y =0;
-        p.vy =0;
-    }
+p.y+=p.vy
+p.vy-=gravity
 
-    if(p.x<0) p.x=0;
-    if(p.x>gameWidth-50) p.x=gameWidth-50;
+if(p.y<0){
+p.y=0
+p.vy=0
 }
 
-function draw(p){
-    p.el.style.left = p.x + "px";
-    p.el.style.bottom = p.y + "px";
 }
 
 function punch(attacker,target){
 
-    attacker.attacking = true;
+if(attacker.attack) return
 
-    let dist = Math.abs(attacker.x - target.x);
+attacker.attack=true
 
-    if(dist <80){
-        target.hp -=10;
-    }
+let dist=Math.abs(attacker.x-target.x)
 
-    attacker.el.style.transform="scaleX(1.3)";
+if(dist<80){
 
-    setTimeout(()=>{
-        attacker.el.style.transform="scaleX(1)";
-        attacker.attacking=false;
-    },200);
+attacker.combo++
+
+let damage=8+attacker.combo*2
+
+target.hp-=damage
+
+}else{
+attacker.combo=0
 }
 
-update();
+setTimeout(()=>{
+attacker.attack=false
+},200)
+
+}
+
+function control(){
+
+// player1
+if(keys["a"]) p1.x-=5
+if(keys["d"]) p1.x+=5
+if(keys["w"] && p1.y===0) p1.vy=12
+if(keys["f"]) punch(p1,p2)
+
+// player2
+if(keys["ArrowLeft"]) p2.x-=5
+if(keys["ArrowRight"]) p2.x+=5
+if(keys["ArrowUp"] && p2.y===0) p2.vy=12
+if(keys["/"]) punch(p2,p1)
+
+}
+
+function update(){
+
+control()
+
+physics(p1)
+physics(p2)
+
+ctx.clearRect(0,0,900,420)
+
+drawFighter(p1)
+drawFighter(p2)
+
+hp1.style.width=p1.hp+"%"
+hp2.style.width=p2.hp+"%"
+
+if(p1.hp<=0){
+result.textContent="青（夫人風）の勝ち！"
+return
+}
+
+if(p2.hp<=0){
+result.textContent="赤（未来風）の勝ち！"
+return
+}
+
+requestAnimationFrame(update)
+
+}
+
+update()
 
 </script>
 
