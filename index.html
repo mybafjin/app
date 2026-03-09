@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ぷにぷにボクシング</title>
+<title>動物ボクシング</title>
 
 <style>
 
@@ -29,12 +29,11 @@ border:4px solid white;
 .panel{
 width:200px;
 padding:20px;
-font-size:14px;
 line-height:1.6;
 }
 
 .left{color:#ff9ac6}
-.right{color:#8cff8c}
+.right{color:#9cff7a}
 
 .health{
 position:absolute;
@@ -75,7 +74,7 @@ font-weight:bold;
 <div id="container">
 
 <div class="panel left">
-<h3>🦍 ピンクゴリラ</h3>
+<h3>🦍 ゴリラ</h3>
 A / D 移動<br>
 W ジャンプ<br>
 F ストレート<br>
@@ -86,7 +85,7 @@ H アッパー
 <canvas id="game" width="900" height="420"></canvas>
 
 <div class="panel right">
-<h3>🐼 黄緑パンダ</h3>
+<h3>🐼 パンダ</h3>
 ← → 移動<br>
 ↑ ジャンプ<br>
 J ストレート<br>
@@ -103,7 +102,7 @@ const ctx=canvas.getContext("2d")
 
 const gravity=0.6
 
-function player(x,color,type){
+function player(x,type){
 return{
 x:x,
 y:0,
@@ -114,13 +113,13 @@ attack:"",
 combo:0,
 rot:0,
 dead:false,
-color:color,
-type:type
+type:type,
+squash:1
 }
 }
 
-const gorilla=player(200,"#ff8fb6","gorilla")
-const panda=player(700,"#9cff7a","panda")
+const gorilla=player(200,"gorilla")
+const panda=player(700,"panda")
 
 const bar1=document.getElementById("bar1")
 const bar2=document.getElementById("bar2")
@@ -139,6 +138,13 @@ p.y+=p.vy
 p.vy-=gravity
 p.vx*=0.9
 
+// フォールガイズ風スクワッシュ
+if(p.y===0){
+p.squash=1+Math.sin(Date.now()/100)/25
+}else{
+p.squash=1
+}
+
 if(p.y<0){
 p.y=0
 p.vy=0
@@ -146,38 +152,41 @@ p.vy=0
 
 }
 
-function drawFace(p){
-
-if(p.type==="gorilla"){
-
-ctx.fillStyle="#222"
-ctx.beginPath()
-ctx.arc(-8,-6,4,0,Math.PI*2)
-ctx.arc(8,-6,4,0,Math.PI*2)
-ctx.fill()
-
-ctx.beginPath()
-ctx.arc(0,4,8,0,Math.PI*2)
-ctx.fillStyle="#ffd1dc"
-ctx.fill()
-
-}
-
-if(p.type==="panda"){
+function drawGorilla(){
 
 ctx.fillStyle="black"
 ctx.beginPath()
-ctx.arc(-10,-6,6,0,Math.PI*2)
-ctx.arc(10,-6,6,0,Math.PI*2)
+ctx.arc(-10,-5,4,0,Math.PI*2)
+ctx.arc(10,-5,4,0,Math.PI*2)
 ctx.fill()
 
-ctx.fillStyle="white"
+ctx.fillStyle="#666"
 ctx.beginPath()
-ctx.arc(-10,-6,3,0,Math.PI*2)
-ctx.arc(10,-6,3,0,Math.PI*2)
+ctx.ellipse(0,6,12,8,0,0,Math.PI*2)
 ctx.fill()
 
 }
+
+function drawPanda(){
+
+ctx.fillStyle="black"
+
+ctx.beginPath()
+ctx.arc(-18,-18,7,0,Math.PI*2)
+ctx.arc(18,-18,7,0,Math.PI*2)
+ctx.fill()
+
+ctx.beginPath()
+ctx.arc(-10,-5,8,0,Math.PI*2)
+ctx.arc(10,-5,8,0,Math.PI*2)
+ctx.fill()
+
+ctx.fillStyle="white"
+
+ctx.beginPath()
+ctx.arc(-10,-5,4,0,Math.PI*2)
+ctx.arc(10,-5,4,0,Math.PI*2)
+ctx.fill()
 
 }
 
@@ -190,20 +199,41 @@ ctx.save()
 ctx.translate(p.x,baseY)
 ctx.rotate(p.rot)
 
-let squash=1+Math.sin(Date.now()/150)/18
+let w=35*p.squash
+let h=50/p.squash
 
-// body
+if(p.type==="gorilla"){
+
+ctx.fillStyle="#444"
 ctx.beginPath()
-ctx.ellipse(0,0,30*squash,38,0,0,Math.PI*2)
-ctx.fillStyle=p.color
+ctx.ellipse(0,0,w,h,0,0,Math.PI*2)
 ctx.fill()
 
-// arms
-ctx.strokeStyle="white"
-ctx.lineWidth=7
+drawGorilla()
+
+}
+
+if(p.type==="panda"){
+
+ctx.fillStyle="white"
+ctx.beginPath()
+ctx.ellipse(0,0,w,h,0,0,Math.PI*2)
+ctx.fill()
+
+ctx.fillStyle="black"
+ctx.beginPath()
+ctx.arc(-18,10,10,0,Math.PI*2)
+ctx.arc(18,10,10,0,Math.PI*2)
+ctx.fill()
+
+drawPanda()
+
+}
+
+ctx.strokeStyle="black"
+ctx.lineWidth=8
 
 let reach=20
-
 if(p.attack==="straight") reach=45
 if(p.attack==="hook") reach=38
 if(p.attack==="upper") reach=30
@@ -217,8 +247,6 @@ ctx.beginPath()
 ctx.moveTo(25,-5)
 ctx.lineTo(25+reach,-5)
 ctx.stroke()
-
-drawFace(p)
 
 ctx.restore()
 
@@ -295,7 +323,7 @@ function fall(p){
 
 let t=setInterval(()=>{
 
-p.rot+=0.2
+p.rot+=0.25
 p.y-=2
 
 if(p.y<-80) clearInterval(t)
