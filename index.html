@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ボクシングゲーム</title>
+<title>ぷにぷにボクシング</title>
 
 <style>
 
@@ -13,20 +13,17 @@ font-family:sans-serif;
 text-align:center;
 }
 
-#game{
-margin:auto;
-width:900px;
-height:420px;
+canvas{
+background:linear-gradient(#666,#222);
 border:4px solid white;
-background:linear-gradient(#555,#222);
 }
 
 .health{
-width:400px;
+width:350px;
 height:20px;
 background:#333;
-border:2px solid white;
 margin:auto;
+border:2px solid white;
 }
 
 .bar{
@@ -35,7 +32,7 @@ background:lime;
 }
 
 #result{
-font-size:30px;
+font-size:40px;
 margin-top:10px;
 }
 
@@ -44,12 +41,12 @@ margin-top:10px;
 
 <body>
 
-<h1>🥊 ボクシングゲーム</h1>
+<h2>🥊 ぷにぷにボクシング</h2>
 
-<div>赤（未来風）</div>
+<div>Player1</div>
 <div class="health"><div id="hp1" class="bar"></div></div>
 
-<div>青（夫人風）</div>
+<div>Player2</div>
 <div class="health"><div id="hp2" class="bar"></div></div>
 
 <canvas id="game" width="900" height="420"></canvas>
@@ -61,33 +58,25 @@ margin-top:10px;
 const canvas=document.getElementById("game")
 const ctx=canvas.getContext("2d")
 
-const gravity=0.7
+const gravity=0.6
 
-const p1={
-x:200,
+function createPlayer(x,color){
+return{
+x:x,
 y:0,
 vx:0,
 vy:0,
 hp:100,
+attack:"",
 combo:0,
-attack:false,
-dir:1,
-name:"未来風",
-color:"red"
+color:color,
+dead:false,
+rot:0
+}
 }
 
-const p2={
-x:700,
-y:0,
-vx:0,
-vy:0,
-hp:100,
-combo:0,
-attack:false,
-dir:-1,
-name:"夫人風",
-color:"blue"
-}
+const p1=createPlayer(200,"red")
+const p2=createPlayer(700,"deepskyblue")
 
 const hp1=document.getElementById("hp1")
 const hp2=document.getElementById("hp2")
@@ -97,59 +86,6 @@ let keys={}
 
 document.addEventListener("keydown",e=>keys[e.key]=true)
 document.addEventListener("keyup",e=>keys[e.key]=false)
-
-function drawFighter(p){
-
-let baseY=350-p.y
-
-ctx.lineWidth=5
-ctx.strokeStyle="white"
-
-// torso
-ctx.beginPath()
-ctx.moveTo(p.x,baseY-90)
-ctx.lineTo(p.x,baseY-40)
-ctx.stroke()
-
-// legs
-ctx.beginPath()
-ctx.moveTo(p.x,baseY-40)
-ctx.lineTo(p.x-20,baseY)
-ctx.moveTo(p.x,baseY-40)
-ctx.lineTo(p.x+20,baseY)
-ctx.stroke()
-
-// arms
-ctx.beginPath()
-
-if(p.attack){
-
-ctx.moveTo(p.x,baseY-80)
-ctx.lineTo(p.x+45*p.dir,baseY-80)
-
-}else{
-
-ctx.moveTo(p.x,baseY-80)
-ctx.lineTo(p.x+20*p.dir,baseY-60)
-
-}
-
-ctx.moveTo(p.x,baseY-80)
-ctx.lineTo(p.x-20*p.dir,baseY-60)
-
-ctx.stroke()
-
-// head
-ctx.beginPath()
-ctx.arc(p.x,baseY-110,18,0,Math.PI*2)
-ctx.fillStyle=p.color
-ctx.fill()
-
-ctx.fillStyle="white"
-ctx.font="10px sans-serif"
-ctx.fillText(p.name,p.x-18,baseY-110)
-
-}
 
 function physics(p){
 
@@ -165,16 +101,61 @@ p.y=0
 p.vy=0
 }
 
-if(p.x<20)p.x=20
-if(p.x>880)p.x=880
+}
+
+function drawPlayer(p){
+
+let baseY=350-p.y
+
+ctx.save()
+
+ctx.translate(p.x,baseY)
+ctx.rotate(p.rot)
+
+let squash=1+Math.sin(Date.now()/120)/20
+
+// body
+ctx.beginPath()
+ctx.ellipse(0,0,28*squash,35,0,0,Math.PI*2)
+ctx.fillStyle=p.color
+ctx.fill()
+
+// eyes
+ctx.fillStyle="white"
+ctx.beginPath()
+ctx.arc(-8,-5,5,0,Math.PI*2)
+ctx.arc(8,-5,5,0,Math.PI*2)
+ctx.fill()
+
+// arms
+ctx.strokeStyle="white"
+ctx.lineWidth=6
+
+let reach=20
+
+if(p.attack==="straight") reach=45
+if(p.attack==="hook") reach=40
+if(p.attack==="upper") reach=30
+
+ctx.beginPath()
+ctx.moveTo(-20,-5)
+ctx.lineTo(-20-reach,-5)
+ctx.stroke()
+
+ctx.beginPath()
+ctx.moveTo(20,-5)
+ctx.lineTo(20+reach,-5)
+ctx.stroke()
+
+ctx.restore()
 
 }
 
-function punch(attacker,target){
+function attack(attacker,target,type){
 
-if(attacker.attack) return
+if(attacker.dead) return
 
-attacker.attack=true
+attacker.attack=type
 
 let dist=Math.abs(attacker.x-target.x)
 
@@ -182,51 +163,79 @@ if(dist<90){
 
 attacker.combo++
 
-let damage=8+attacker.combo*2
+let damage=8
+
+if(type==="hook") damage=12
+if(type==="upper") damage=15
+
+damage+=attacker.combo*2
+
 target.hp-=damage
 
 // ノックバック
-let force=8+attacker.combo*2
-target.vx=force*attacker.dir
+target.vx=(target.x>attacker.x?1:-1)*(6+attacker.combo*2)
 target.vy=4
 
 }else{
-
 attacker.combo=0
-
 }
 
 setTimeout(()=>{
-attacker.attack=false
-},180)
+attacker.attack=""
+},200)
 
 }
 
 function control(){
 
-// p1
-if(keys["a"]){
-p1.x-=5
-p1.dir=-1
-}
-if(keys["d"]){
-p1.x+=5
-p1.dir=1
-}
-if(keys["w"] && p1.y===0)p1.vy=12
-if(keys["f"])punch(p1,p2)
+// player1
+if(keys["a"]) p1.x-=4
+if(keys["d"]) p1.x+=4
+if(keys["w"] && p1.y===0) p1.vy=11
 
-// p2
-if(keys["ArrowLeft"]){
-p2.x-=5
-p2.dir=-1
+if(keys["f"]) attack(p1,p2,"straight")
+if(keys["g"]) attack(p1,p2,"hook")
+if(keys["h"]) attack(p1,p2,"upper")
+
+// player2
+if(keys["ArrowLeft"]) p2.x-=4
+if(keys["ArrowRight"]) p2.x+=4
+if(keys["ArrowUp"] && p2.y===0) p2.vy=11
+
+if(keys["j"]) attack(p2,p1,"straight")
+if(keys["k"]) attack(p2,p1,"hook")
+if(keys["l"]) attack(p2,p1,"upper")
+
 }
-if(keys["ArrowRight"]){
-p2.x+=5
-p2.dir=1
+
+function koCheck(){
+
+if(p1.hp<=0 && !p1.dead){
+p1.dead=true
+fall(p1)
+result.textContent="Player2 KO!"
 }
-if(keys["ArrowUp"] && p2.y===0)p2.vy=12
-if(keys["/"])punch(p2,p1)
+
+if(p2.hp<=0 && !p2.dead){
+p2.dead=true
+fall(p2)
+result.textContent="Player1 KO!"
+}
+
+}
+
+function fall(p){
+
+let t=setInterval(()=>{
+
+p.rot+=0.2
+p.y-=2
+
+if(p.y<-60){
+clearInterval(t)
+}
+
+},16)
 
 }
 
@@ -239,21 +248,13 @@ physics(p2)
 
 ctx.clearRect(0,0,900,420)
 
-drawFighter(p1)
-drawFighter(p2)
+drawPlayer(p1)
+drawPlayer(p2)
 
 hp1.style.width=p1.hp+"%"
 hp2.style.width=p2.hp+"%"
 
-if(p1.hp<=0){
-result.textContent="青（夫人風）の勝ち！"
-return
-}
-
-if(p2.hp<=0){
-result.textContent="赤（未来風）の勝ち！"
-return
-}
+koCheck()
 
 requestAnimationFrame(update)
 
