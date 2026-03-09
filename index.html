@@ -2,46 +2,41 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>動物ボクシング</title>
+<title>ゴリラ vs パンダ ボクシング</title>
 
 <style>
 
 body{
 margin:0;
-background:#111;
-color:white;
 font-family:sans-serif;
+background:#87ceeb;
 overflow:hidden;
 }
 
-#container{
-display:flex;
-align-items:center;
-justify-content:center;
-height:100vh;
-}
-
 canvas{
-background:linear-gradient(#666,#222);
-border:4px solid white;
+display:block;
+margin:auto;
+border:4px solid black;
+background:linear-gradient(#87ceeb 70%, #4caf50 70%);
 }
 
 .panel{
+position:absolute;
+top:80px;
 width:200px;
-padding:20px;
-line-height:1.6;
+font-size:14px;
 }
 
-.left{color:#ff9ac6}
-.right{color:#9cff7a}
+.left{left:10px}
+.right{right:10px}
 
 .health{
 position:absolute;
 top:10px;
 width:300px;
-height:18px;
+height:20px;
 background:#333;
-border:2px solid white;
+border:2px solid black;
 }
 
 #hp1{left:220px}
@@ -49,7 +44,7 @@ border:2px solid white;
 
 .bar{
 height:100%;
-background:lime;
+background:red;
 }
 
 #result{
@@ -71,10 +66,8 @@ font-weight:bold;
 <div class="health" id="hp1"><div class="bar" id="bar1"></div></div>
 <div class="health" id="hp2"><div class="bar" id="bar2"></div></div>
 
-<div id="container">
-
 <div class="panel left">
-<h3>🦍 ゴリラ</h3>
+<b>🦍 ゴリラ</b><br>
 A / D 移動<br>
 W ジャンプ<br>
 F ストレート<br>
@@ -82,10 +75,8 @@ G フック<br>
 H アッパー
 </div>
 
-<canvas id="game" width="900" height="420"></canvas>
-
 <div class="panel right">
-<h3>🐼 パンダ</h3>
+<b>🐼 パンダ</b><br>
 ← → 移動<br>
 ↑ ジャンプ<br>
 J ストレート<br>
@@ -93,7 +84,7 @@ K フック<br>
 L アッパー
 </div>
 
-</div>
+<canvas id="game" width="900" height="420"></canvas>
 
 <script>
 
@@ -138,13 +129,6 @@ p.y+=p.vy
 p.vy-=gravity
 p.vx*=0.9
 
-// フォールガイズ風スクワッシュ
-if(p.y===0){
-p.squash=1+Math.sin(Date.now()/100)/25
-}else{
-p.squash=1
-}
-
 if(p.y<0){
 p.y=0
 p.vy=0
@@ -152,103 +136,120 @@ p.vy=0
 
 }
 
-function drawGorilla(){
+function drawGorilla(p){
 
+let baseY=350-p.y
+
+ctx.save()
+ctx.translate(p.x,baseY)
+ctx.rotate(p.rot)
+
+let squash=1+Math.sin(Date.now()/120)/30
+
+// body
+ctx.fillStyle="#333"
+ctx.beginPath()
+ctx.ellipse(0,0,40*squash,55/squash,0,0,Math.PI*2)
+ctx.fill()
+
+// arms
+ctx.fillStyle="#222"
+ctx.beginPath()
+ctx.ellipse(-45,-10,20,35,0,0,Math.PI*2)
+ctx.ellipse(45,-10,20,35,0,0,Math.PI*2)
+ctx.fill()
+
+// legs
+ctx.beginPath()
+ctx.ellipse(-20,45,20,25,0,0,Math.PI*2)
+ctx.ellipse(20,45,20,25,0,0,Math.PI*2)
+ctx.fill()
+
+// head
+ctx.fillStyle="#444"
+ctx.beginPath()
+ctx.arc(0,-60,25,0,Math.PI*2)
+ctx.fill()
+
+// face
+ctx.fillStyle="#aaa"
+ctx.beginPath()
+ctx.ellipse(0,-55,15,10,0,0,Math.PI*2)
+ctx.fill()
+
+// eyes
 ctx.fillStyle="black"
 ctx.beginPath()
-ctx.arc(-10,-5,4,0,Math.PI*2)
-ctx.arc(10,-5,4,0,Math.PI*2)
+ctx.arc(-8,-60,3,0,Math.PI*2)
+ctx.arc(8,-60,3,0,Math.PI*2)
 ctx.fill()
 
-ctx.fillStyle="#666"
-ctx.beginPath()
-ctx.ellipse(0,6,12,8,0,0,Math.PI*2)
-ctx.fill()
+ctx.restore()
 
 }
 
-function drawPanda(){
+function drawPanda(p){
 
-ctx.fillStyle="black"
+let baseY=350-p.y
 
+ctx.save()
+ctx.translate(p.x,baseY)
+ctx.rotate(p.rot)
+
+let squash=1+Math.sin(Date.now()/120)/30
+
+// body
+ctx.fillStyle="white"
 ctx.beginPath()
-ctx.arc(-18,-18,7,0,Math.PI*2)
-ctx.arc(18,-18,7,0,Math.PI*2)
+ctx.ellipse(0,0,40*squash,55/squash,0,0,Math.PI*2)
 ctx.fill()
 
+// arms
+ctx.fillStyle="black"
 ctx.beginPath()
-ctx.arc(-10,-5,8,0,Math.PI*2)
-ctx.arc(10,-5,8,0,Math.PI*2)
+ctx.ellipse(-45,-10,20,35,0,0,Math.PI*2)
+ctx.ellipse(45,-10,20,35,0,0,Math.PI*2)
+ctx.fill()
+
+// legs
+ctx.beginPath()
+ctx.ellipse(-20,45,20,25,0,0,Math.PI*2)
+ctx.ellipse(20,45,20,25,0,0,Math.PI*2)
+ctx.fill()
+
+// head
+ctx.fillStyle="white"
+ctx.beginPath()
+ctx.arc(0,-60,25,0,Math.PI*2)
+ctx.fill()
+
+// ears
+ctx.fillStyle="black"
+ctx.beginPath()
+ctx.arc(-18,-80,8,0,Math.PI*2)
+ctx.arc(18,-80,8,0,Math.PI*2)
+ctx.fill()
+
+// eyes
+ctx.beginPath()
+ctx.arc(-10,-60,7,0,Math.PI*2)
+ctx.arc(10,-60,7,0,Math.PI*2)
 ctx.fill()
 
 ctx.fillStyle="white"
-
 ctx.beginPath()
-ctx.arc(-10,-5,4,0,Math.PI*2)
-ctx.arc(10,-5,4,0,Math.PI*2)
+ctx.arc(-10,-60,3,0,Math.PI*2)
+ctx.arc(10,-60,3,0,Math.PI*2)
 ctx.fill()
+
+ctx.restore()
 
 }
 
 function drawPlayer(p){
 
-let baseY=350-p.y
-
-ctx.save()
-
-ctx.translate(p.x,baseY)
-ctx.rotate(p.rot)
-
-let w=35*p.squash
-let h=50/p.squash
-
-if(p.type==="gorilla"){
-
-ctx.fillStyle="#444"
-ctx.beginPath()
-ctx.ellipse(0,0,w,h,0,0,Math.PI*2)
-ctx.fill()
-
-drawGorilla()
-
-}
-
-if(p.type==="panda"){
-
-ctx.fillStyle="white"
-ctx.beginPath()
-ctx.ellipse(0,0,w,h,0,0,Math.PI*2)
-ctx.fill()
-
-ctx.fillStyle="black"
-ctx.beginPath()
-ctx.arc(-18,10,10,0,Math.PI*2)
-ctx.arc(18,10,10,0,Math.PI*2)
-ctx.fill()
-
-drawPanda()
-
-}
-
-ctx.strokeStyle="black"
-ctx.lineWidth=8
-
-let reach=20
-if(p.attack==="straight") reach=45
-if(p.attack==="hook") reach=38
-if(p.attack==="upper") reach=30
-
-ctx.beginPath()
-ctx.moveTo(-25,-5)
-ctx.lineTo(-25-reach,-5)
-ctx.stroke()
-
-ctx.beginPath()
-ctx.moveTo(25,-5)
-ctx.lineTo(25+reach,-5)
-ctx.stroke()
-
-ctx.restore()
+if(p.type==="gorilla") drawGorilla(p)
+if(p.type==="panda") drawPanda(p)
 
 }
 
@@ -260,7 +261,7 @@ a.attack=type
 
 let dist=Math.abs(a.x-t.x)
 
-if(dist<90){
+if(dist<100){
 
 a.combo++
 
@@ -326,7 +327,7 @@ let t=setInterval(()=>{
 p.rot+=0.25
 p.y-=2
 
-if(p.y<-80) clearInterval(t)
+if(p.y<-120) clearInterval(t)
 
 },16)
 
