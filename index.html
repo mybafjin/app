@@ -7,10 +7,18 @@
 <style>
 
 body{
+margin:0;
 background:#111;
 color:white;
 font-family:sans-serif;
-text-align:center;
+overflow:hidden;
+}
+
+#container{
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
 }
 
 canvas{
@@ -18,13 +26,27 @@ background:linear-gradient(#666,#222);
 border:4px solid white;
 }
 
+.panel{
+width:200px;
+padding:20px;
+font-size:14px;
+line-height:1.6;
+}
+
+.left{color:#ff9ac6}
+.right{color:#8cff8c}
+
 .health{
-width:350px;
-height:20px;
+position:absolute;
+top:10px;
+width:300px;
+height:18px;
 background:#333;
-margin:auto;
 border:2px solid white;
 }
+
+#hp1{left:220px}
+#hp2{right:220px}
 
 .bar{
 height:100%;
@@ -32,8 +54,12 @@ background:lime;
 }
 
 #result{
-font-size:40px;
-margin-top:10px;
+position:absolute;
+top:40%;
+width:100%;
+text-align:center;
+font-size:50px;
+font-weight:bold;
 }
 
 </style>
@@ -41,17 +67,34 @@ margin-top:10px;
 
 <body>
 
-<h2>🥊 ぷにぷにボクシング</h2>
+<div id="result"></div>
 
-<div>Player1</div>
-<div class="health"><div id="hp1" class="bar"></div></div>
+<div class="health" id="hp1"><div class="bar" id="bar1"></div></div>
+<div class="health" id="hp2"><div class="bar" id="bar2"></div></div>
 
-<div>Player2</div>
-<div class="health"><div id="hp2" class="bar"></div></div>
+<div id="container">
+
+<div class="panel left">
+<h3>🦍 ピンクゴリラ</h3>
+A / D 移動<br>
+W ジャンプ<br>
+F ストレート<br>
+G フック<br>
+H アッパー
+</div>
 
 <canvas id="game" width="900" height="420"></canvas>
 
-<div id="result"></div>
+<div class="panel right">
+<h3>🐼 黄緑パンダ</h3>
+← → 移動<br>
+↑ ジャンプ<br>
+J ストレート<br>
+K フック<br>
+L アッパー
+</div>
+
+</div>
 
 <script>
 
@@ -60,7 +103,7 @@ const ctx=canvas.getContext("2d")
 
 const gravity=0.6
 
-function createPlayer(x,color){
+function player(x,color,type){
 return{
 x:x,
 y:0,
@@ -69,17 +112,18 @@ vy:0,
 hp:100,
 attack:"",
 combo:0,
-color:color,
+rot:0,
 dead:false,
-rot:0
+color:color,
+type:type
 }
 }
 
-const p1=createPlayer(200,"red")
-const p2=createPlayer(700,"deepskyblue")
+const gorilla=player(200,"#ff8fb6","gorilla")
+const panda=player(700,"#9cff7a","panda")
 
-const hp1=document.getElementById("hp1")
-const hp2=document.getElementById("hp2")
+const bar1=document.getElementById("bar1")
+const bar2=document.getElementById("bar2")
 const result=document.getElementById("result")
 
 let keys={}
@@ -93,12 +137,46 @@ p.x+=p.vx
 p.y+=p.vy
 
 p.vy-=gravity
-
 p.vx*=0.9
 
 if(p.y<0){
 p.y=0
 p.vy=0
+}
+
+}
+
+function drawFace(p){
+
+if(p.type==="gorilla"){
+
+ctx.fillStyle="#222"
+ctx.beginPath()
+ctx.arc(-8,-6,4,0,Math.PI*2)
+ctx.arc(8,-6,4,0,Math.PI*2)
+ctx.fill()
+
+ctx.beginPath()
+ctx.arc(0,4,8,0,Math.PI*2)
+ctx.fillStyle="#ffd1dc"
+ctx.fill()
+
+}
+
+if(p.type==="panda"){
+
+ctx.fillStyle="black"
+ctx.beginPath()
+ctx.arc(-10,-6,6,0,Math.PI*2)
+ctx.arc(10,-6,6,0,Math.PI*2)
+ctx.fill()
+
+ctx.fillStyle="white"
+ctx.beginPath()
+ctx.arc(-10,-6,3,0,Math.PI*2)
+ctx.arc(10,-6,3,0,Math.PI*2)
+ctx.fill()
+
 }
 
 }
@@ -112,114 +190,103 @@ ctx.save()
 ctx.translate(p.x,baseY)
 ctx.rotate(p.rot)
 
-let squash=1+Math.sin(Date.now()/120)/20
+let squash=1+Math.sin(Date.now()/150)/18
 
 // body
 ctx.beginPath()
-ctx.ellipse(0,0,28*squash,35,0,0,Math.PI*2)
+ctx.ellipse(0,0,30*squash,38,0,0,Math.PI*2)
 ctx.fillStyle=p.color
-ctx.fill()
-
-// eyes
-ctx.fillStyle="white"
-ctx.beginPath()
-ctx.arc(-8,-5,5,0,Math.PI*2)
-ctx.arc(8,-5,5,0,Math.PI*2)
 ctx.fill()
 
 // arms
 ctx.strokeStyle="white"
-ctx.lineWidth=6
+ctx.lineWidth=7
 
 let reach=20
 
 if(p.attack==="straight") reach=45
-if(p.attack==="hook") reach=40
+if(p.attack==="hook") reach=38
 if(p.attack==="upper") reach=30
 
 ctx.beginPath()
-ctx.moveTo(-20,-5)
-ctx.lineTo(-20-reach,-5)
+ctx.moveTo(-25,-5)
+ctx.lineTo(-25-reach,-5)
 ctx.stroke()
 
 ctx.beginPath()
-ctx.moveTo(20,-5)
-ctx.lineTo(20+reach,-5)
+ctx.moveTo(25,-5)
+ctx.lineTo(25+reach,-5)
 ctx.stroke()
+
+drawFace(p)
 
 ctx.restore()
 
 }
 
-function attack(attacker,target,type){
+function attack(a,t,type){
 
-if(attacker.dead) return
+if(a.dead) return
 
-attacker.attack=type
+a.attack=type
 
-let dist=Math.abs(attacker.x-target.x)
+let dist=Math.abs(a.x-t.x)
 
 if(dist<90){
 
-attacker.combo++
+a.combo++
 
-let damage=8
+let dmg=8
+if(type==="hook") dmg=12
+if(type==="upper") dmg=16
 
-if(type==="hook") damage=12
-if(type==="upper") damage=15
+dmg+=a.combo*2
 
-damage+=attacker.combo*2
+t.hp-=dmg
 
-target.hp-=damage
-
-// ノックバック
-target.vx=(target.x>attacker.x?1:-1)*(6+attacker.combo*2)
-target.vy=4
+t.vx=(t.x>a.x?1:-1)*(6+a.combo*2)
+t.vy=4
 
 }else{
-attacker.combo=0
+a.combo=0
 }
 
-setTimeout(()=>{
-attacker.attack=""
-},200)
+setTimeout(()=>a.attack="",200)
 
 }
 
 function control(){
 
-// player1
-if(keys["a"]) p1.x-=4
-if(keys["d"]) p1.x+=4
-if(keys["w"] && p1.y===0) p1.vy=11
+if(keys["a"]) gorilla.x-=4
+if(keys["d"]) gorilla.x+=4
+if(keys["w"] && gorilla.y===0) gorilla.vy=11
 
-if(keys["f"]) attack(p1,p2,"straight")
-if(keys["g"]) attack(p1,p2,"hook")
-if(keys["h"]) attack(p1,p2,"upper")
+if(keys["f"]) attack(gorilla,panda,"straight")
+if(keys["g"]) attack(gorilla,panda,"hook")
+if(keys["h"]) attack(gorilla,panda,"upper")
 
-// player2
-if(keys["ArrowLeft"]) p2.x-=4
-if(keys["ArrowRight"]) p2.x+=4
-if(keys["ArrowUp"] && p2.y===0) p2.vy=11
+if(keys["ArrowLeft"]) panda.x-=4
+if(keys["ArrowRight"]) panda.x+=4
+if(keys["ArrowUp"] && panda.y===0) panda.vy=11
 
-if(keys["j"]) attack(p2,p1,"straight")
-if(keys["k"]) attack(p2,p1,"hook")
-if(keys["l"]) attack(p2,p1,"upper")
+if(keys["j"]) attack(panda,gorilla,"straight")
+if(keys["k"]) attack(panda,gorilla,"hook")
+if(keys["l"]) attack(panda,gorilla,"upper")
 
 }
 
 function koCheck(){
 
-if(p1.hp<=0 && !p1.dead){
-p1.dead=true
-fall(p1)
-result.textContent="Player2 KO!"
+if(gorilla.hp<=0 && !gorilla.dead){
+gorilla.dead=true
+result.textContent="🐼 パンダ KO!"
+fall(gorilla)
 }
 
-if(p2.hp<=0 && !p2.dead){
-p2.dead=true
-fall(p2)
-result.textContent="Player1 KO!"
+if(panda.hp<=0 && !panda.dead){
+panda.dead=true
+result.textContent="🦍 ゴリラ KO!"
+fall(panda)
 }
 
 }
@@ -231,9 +298,7 @@ let t=setInterval(()=>{
 p.rot+=0.2
 p.y-=2
 
-if(p.y<-60){
-clearInterval(t)
-}
+if(p.y<-80) clearInterval(t)
 
 },16)
 
@@ -243,16 +308,16 @@ function update(){
 
 control()
 
-physics(p1)
-physics(p2)
+physics(gorilla)
+physics(panda)
 
 ctx.clearRect(0,0,900,420)
 
-drawPlayer(p1)
-drawPlayer(p2)
+drawPlayer(gorilla)
+drawPlayer(panda)
 
-hp1.style.width=p1.hp+"%"
-hp2.style.width=p2.hp+"%"
+bar1.style.width=gorilla.hp+"%"
+bar2.style.width=panda.hp+"%"
 
 koCheck()
 
