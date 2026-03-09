@@ -2,33 +2,23 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ゴリラ vs パンダ ボクシング</title>
+<title>ゴリラ vs パンダ</title>
 
 <style>
 
 body{
 margin:0;
-font-family:sans-serif;
 background:#87ceeb;
+font-family:sans-serif;
 overflow:hidden;
 }
 
 canvas{
 display:block;
 margin:auto;
-border:4px solid black;
 background:linear-gradient(#87ceeb 70%, #4caf50 70%);
+border:4px solid black;
 }
-
-.panel{
-position:absolute;
-top:80px;
-width:200px;
-font-size:14px;
-}
-
-.left{left:10px}
-.right{right:10px}
 
 .health{
 position:absolute;
@@ -47,13 +37,33 @@ height:100%;
 background:red;
 }
 
+.panel{
+position:absolute;
+top:80px;
+width:200px;
+font-size:14px;
+}
+
+.left{left:10px}
+.right{right:10px}
+
 #result{
 position:absolute;
-top:40%;
+top:35%;
 width:100%;
 text-align:center;
 font-size:50px;
 font-weight:bold;
+}
+
+#restart{
+position:absolute;
+top:50%;
+left:50%;
+transform:translateX(-50%);
+padding:10px 20px;
+font-size:20px;
+display:none;
 }
 
 </style>
@@ -62,13 +72,14 @@ font-weight:bold;
 <body>
 
 <div id="result"></div>
+<button id="restart">もう一度試合</button>
 
 <div class="health" id="hp1"><div class="bar" id="bar1"></div></div>
 <div class="health" id="hp2"><div class="bar" id="bar2"></div></div>
 
 <div class="panel left">
 <b>🦍 ゴリラ</b><br>
-A / D 移動<br>
+A/D 移動<br>
 W ジャンプ<br>
 F ストレート<br>
 G フック<br>
@@ -102,19 +113,28 @@ vy:0,
 hp:100,
 attack:"",
 combo:0,
-rot:0,
 dead:false,
-type:type,
-squash:1
+arm:0,
+type:type
 }
 }
 
-const gorilla=player(200,"gorilla")
-const panda=player(700,"panda")
+let gorilla,panda
+let effects=[]
 
-const bar1=document.getElementById("bar1")
-const bar2=document.getElementById("bar2")
-const result=document.getElementById("result")
+function reset(){
+
+gorilla=player(200,"gorilla")
+panda=player(700,"panda")
+
+document.getElementById("result").textContent=""
+document.getElementById("restart").style.display="none"
+
+}
+
+reset()
+
+document.getElementById("restart").onclick=reset
 
 let keys={}
 
@@ -136,27 +156,29 @@ p.vy=0
 
 }
 
-function drawGorilla(p){
+function drawPlayer(p){
 
 let baseY=350-p.y
 
 ctx.save()
 ctx.translate(p.x,baseY)
-ctx.rotate(p.rot)
 
-let squash=1+Math.sin(Date.now()/120)/30
+let armMove=0
+if(p.attack==="straight") armMove=40
+if(p.attack==="hook") armMove=30
+if(p.attack==="upper") armMove=20
 
 // body
-ctx.fillStyle="#333"
+ctx.fillStyle=(p.type==="gorilla")?"#333":"white"
 ctx.beginPath()
-ctx.ellipse(0,0,40*squash,55/squash,0,0,Math.PI*2)
+ctx.ellipse(0,0,40,55,0,0,Math.PI*2)
 ctx.fill()
 
 // arms
-ctx.fillStyle="#222"
+ctx.fillStyle=(p.type==="gorilla")?"#222":"black"
 ctx.beginPath()
-ctx.ellipse(-45,-10,20,35,0,0,Math.PI*2)
-ctx.ellipse(45,-10,20,35,0,0,Math.PI*2)
+ctx.ellipse(-45-armMove,-10,20,35,0,0,Math.PI*2)
+ctx.ellipse(45+armMove,-10,20,35,0,0,Math.PI*2)
 ctx.fill()
 
 // legs
@@ -166,90 +188,49 @@ ctx.ellipse(20,45,20,25,0,0,Math.PI*2)
 ctx.fill()
 
 // head
-ctx.fillStyle="#444"
+ctx.fillStyle=(p.type==="gorilla")?"#444":"white"
 ctx.beginPath()
 ctx.arc(0,-60,25,0,Math.PI*2)
 ctx.fill()
 
-// face
-ctx.fillStyle="#aaa"
-ctx.beginPath()
-ctx.ellipse(0,-55,15,10,0,0,Math.PI*2)
-ctx.fill()
+if(p.type==="panda"){
 
-// eyes
 ctx.fillStyle="black"
-ctx.beginPath()
-ctx.arc(-8,-60,3,0,Math.PI*2)
-ctx.arc(8,-60,3,0,Math.PI*2)
-ctx.fill()
 
-ctx.restore()
-
-}
-
-function drawPanda(p){
-
-let baseY=350-p.y
-
-ctx.save()
-ctx.translate(p.x,baseY)
-ctx.rotate(p.rot)
-
-let squash=1+Math.sin(Date.now()/120)/30
-
-// body
-ctx.fillStyle="white"
-ctx.beginPath()
-ctx.ellipse(0,0,40*squash,55/squash,0,0,Math.PI*2)
-ctx.fill()
-
-// arms
-ctx.fillStyle="black"
-ctx.beginPath()
-ctx.ellipse(-45,-10,20,35,0,0,Math.PI*2)
-ctx.ellipse(45,-10,20,35,0,0,Math.PI*2)
-ctx.fill()
-
-// legs
-ctx.beginPath()
-ctx.ellipse(-20,45,20,25,0,0,Math.PI*2)
-ctx.ellipse(20,45,20,25,0,0,Math.PI*2)
-ctx.fill()
-
-// head
-ctx.fillStyle="white"
-ctx.beginPath()
-ctx.arc(0,-60,25,0,Math.PI*2)
-ctx.fill()
-
-// ears
-ctx.fillStyle="black"
 ctx.beginPath()
 ctx.arc(-18,-80,8,0,Math.PI*2)
 ctx.arc(18,-80,8,0,Math.PI*2)
 ctx.fill()
 
-// eyes
 ctx.beginPath()
 ctx.arc(-10,-60,7,0,Math.PI*2)
 ctx.arc(10,-60,7,0,Math.PI*2)
 ctx.fill()
 
-ctx.fillStyle="white"
-ctx.beginPath()
-ctx.arc(-10,-60,3,0,Math.PI*2)
-ctx.arc(10,-60,3,0,Math.PI*2)
-ctx.fill()
+}
 
 ctx.restore()
 
 }
 
-function drawPlayer(p){
+function drawEffects(){
 
-if(p.type==="gorilla") drawGorilla(p)
-if(p.type==="panda") drawPanda(p)
+for(let i=effects.length-1;i>=0;i--){
+
+let e=effects[i]
+
+ctx.fillStyle="yellow"
+
+ctx.beginPath()
+ctx.arc(e.x,e.y,e.r,0,Math.PI*2)
+ctx.fill()
+
+e.r+=1
+e.life--
+
+if(e.life<=0) effects.splice(i,1)
+
+}
 
 }
 
@@ -265,15 +246,22 @@ if(dist<100){
 
 a.combo++
 
-let dmg=8
-if(type==="hook") dmg=12
-if(type==="upper") dmg=16
+let dmg=2
+if(type==="hook") dmg=3
+if(type==="upper") dmg=4
 
-dmg+=a.combo*2
+dmg+=Math.floor(a.combo/3)
 
 t.hp-=dmg
 
-t.vx=(t.x>a.x?1:-1)*(6+a.combo*2)
+effects.push({
+x:(a.x+t.x)/2,
+y:300,
+r:5,
+life:10
+})
+
+t.vx=(t.x>a.x?1:-1)*(6+a.combo)
 t.vy=4
 
 }else{
@@ -308,28 +296,15 @@ function koCheck(){
 
 if(gorilla.hp<=0 && !gorilla.dead){
 gorilla.dead=true
-result.textContent="🐼 パンダ KO!"
-fall(gorilla)
+document.getElementById("result").textContent="🐼 パンダ KO!"
+document.getElementById("restart").style.display="block"
 }
 
 if(panda.hp<=0 && !panda.dead){
 panda.dead=true
-result.textContent="🦍 ゴリラ KO!"
-fall(panda)
+document.getElementById("result").textContent="🦍 ゴリラ KO!"
+document.getElementById("restart").style.display="block"
 }
-
-}
-
-function fall(p){
-
-let t=setInterval(()=>{
-
-p.rot+=0.25
-p.y-=2
-
-if(p.y<-120) clearInterval(t)
-
-},16)
 
 }
 
@@ -345,8 +320,10 @@ ctx.clearRect(0,0,900,420)
 drawPlayer(gorilla)
 drawPlayer(panda)
 
-bar1.style.width=gorilla.hp+"%"
-bar2.style.width=panda.hp+"%"
+drawEffects()
+
+document.getElementById("bar1").style.width=gorilla.hp+"%"
+document.getElementById("bar2").style.width=panda.hp+"%"
 
 koCheck()
 
