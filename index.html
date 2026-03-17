@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>兵士ほふく前進レース</title>
+<title>前進ゲーム</title>
 
 <style>
 
@@ -192,6 +192,9 @@ countdown()
 document.addEventListener("keydown",function(e){
 
 if(!started || finished) return
+
+// 長押し無効
+if(e.repeat) return
 
 if(e.key.toLowerCase()=="a"){
 pos1+=8
