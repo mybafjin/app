@@ -13,6 +13,8 @@ text-align:center;
 margin:0;
 }
 
+h1{margin:10px}
+
 #game{
 width:900px;
 height:220px;
@@ -28,6 +30,9 @@ position:absolute;
 width:60px;
 height:40px;
 }
+
+#p1{bottom:40px}
+#p2{bottom:110px}
 
 .head{
 width:14px;
@@ -67,15 +72,27 @@ border-radius:3px;
 .leg1{left:20px}
 .leg2{left:20px}
 
-#p1{bottom:40px}
-#p2{bottom:100px}
-
 #finish{
 position:absolute;
-right:0;
+right:80px;
 width:10px;
 height:100%;
 background:red;
+}
+
+#count{
+position:absolute;
+top:40%;
+width:100%;
+font-size:70px;
+font-weight:bold;
+color:white;
+text-shadow:3px 3px 6px black;
+}
+
+#controls{
+margin-top:10px;
+font-size:18px;
 }
 
 button{
@@ -112,6 +129,13 @@ font-size:18px;
 
 <div id="finish"></div>
 
+<div id="count"></div>
+
+</div>
+
+<div id="controls">
+プレイヤー1：Aキー連打　
+プレイヤー2：Lキー連打
 </div>
 
 <h2 id="result"></h2>
@@ -122,13 +146,40 @@ font-size:18px;
 
 let pos1=0
 let pos2=0
+
+let started=false
 let finished=false
 
-const finish=820
+const finish=800
+
+function countdown(){
+
+let count=3
+const el=document.getElementById("count")
+
+const timer=setInterval(()=>{
+
+if(count>0){
+el.innerText=count
+count--
+}else if(count===0){
+el.innerText="START!"
+started=true
+count--
+}else{
+el.innerText=""
+clearInterval(timer)
+}
+
+},1000)
+
+}
+
+countdown()
 
 document.addEventListener("keydown",function(e){
 
-if(finished) return
+if(!started || finished) return
 
 if(e.key.toLowerCase()=="a"){
 pos1+=8
@@ -142,10 +193,9 @@ pos2+=8
 
 function animate(id){
 
-let runner=document.getElementById(id)
-
-let arms=runner.getElementsByClassName("arm")
-let legs=runner.getElementsByClassName("leg")
+let r=document.getElementById(id)
+let arms=r.getElementsByClassName("arm")
+let legs=r.getElementsByClassName("leg")
 
 let phase=Math.sin(Date.now()/80)*30
 
@@ -165,14 +215,14 @@ document.getElementById("p2").style.left=pos2+"px"
 animate("p1")
 animate("p2")
 
-if(pos1>=finish){
+if(pos1>finish && !finished){
 finished=true
-document.getElementById("result").innerText="プレイヤー1 勝利！"
+document.getElementById("result").innerText="プレイヤー1 ゴール！"
 }
 
-if(pos2>=finish){
+if(pos2>finish && !finished){
 finished=true
-document.getElementById("result").innerText="プレイヤー2 勝利！"
+document.getElementById("result").innerText="プレイヤー2 ゴール！"
 }
 
 requestAnimationFrame(update)
@@ -185,9 +235,14 @@ function restart(){
 
 pos1=0
 pos2=0
+started=false
 finished=false
 
 document.getElementById("result").innerText=""
+document.getElementById("p1").style.left="0px"
+document.getElementById("p2").style.left="0px"
+
+countdown()
 
 }
 
