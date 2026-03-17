@@ -13,8 +13,6 @@ text-align:center;
 margin:0;
 }
 
-h1{margin:10px}
-
 #game{
 width:900px;
 height:220px;
@@ -23,14 +21,6 @@ background:#5dbb63;
 border:5px solid #333;
 position:relative;
 overflow:hidden;
-}
-
-#ground{
-position:absolute;
-bottom:0;
-height:60px;
-width:100%;
-background:#7a5230;
 }
 
 .runner{
@@ -77,6 +67,9 @@ border-radius:3px;
 .leg1{left:20px}
 .leg2{left:20px}
 
+#p1{bottom:40px}
+#p2{bottom:100px}
+
 #finish{
 position:absolute;
 right:0;
@@ -85,35 +78,10 @@ height:100%;
 background:red;
 }
 
-.bar{
-width:300px;
-height:15px;
-background:#ddd;
-margin:auto;
-margin-bottom:8px;
-}
-
-.fill{
-height:100%;
-background:#ff6666;
-width:100%;
-}
-
 button{
+margin-top:10px;
 padding:10px 20px;
 font-size:18px;
-cursor:pointer;
-}
-
-#controls{
-position:absolute;
-right:10px;
-top:10px;
-background:white;
-padding:10px;
-border-radius:10px;
-font-size:14px;
-text-align:left;
 }
 
 </style>
@@ -133,7 +101,7 @@ text-align:left;
 <div class="leg leg2"></div>
 </div>
 
-<div id="p2" class="runner" style="bottom:90px">
+<div id="p2" class="runner">
 <div class="head"></div>
 <div class="body"></div>
 <div class="arm arm1"></div>
@@ -143,21 +111,8 @@ text-align:left;
 </div>
 
 <div id="finish"></div>
-<div id="ground"></div>
-
-<div id="controls">
-<b>操作</b><br>
-プレイヤー1：Aキー連打<br>
-プレイヤー2：Lキー連打
-</div>
 
 </div>
-
-<p>プレイヤー1スタミナ</p>
-<div class="bar"><div id="stam1" class="fill"></div></div>
-
-<p>プレイヤー2スタミナ</p>
-<div class="bar"><div id="stam2" class="fill"></div></div>
 
 <h2 id="result"></h2>
 
@@ -167,71 +122,48 @@ text-align:left;
 
 let pos1=0
 let pos2=0
-
-let speed1=0
-let speed2=0
-
-let stamina1=100
-let stamina2=100
-
 let finished=false
 
 const finish=820
 
-document.addEventListener("keydown",e=>{
+document.addEventListener("keydown",function(e){
 
-if(finished)return
+if(finished) return
 
-if(e.key==="a"){
-speed1+=0.7
-stamina1-=0.5
+if(e.key.toLowerCase()=="a"){
+pos1+=8
 }
 
-if(e.key==="l"){
-speed2+=0.7
-stamina2-=0.5
+if(e.key.toLowerCase()=="l"){
+pos2+=8
 }
 
 })
 
-function animateRunner(id,phase){
+function animate(id){
 
-let r=document.getElementById(id)
+let runner=document.getElementById(id)
 
-let arms=r.getElementsByClassName("arm")
-let legs=r.getElementsByClassName("leg")
+let arms=runner.getElementsByClassName("arm")
+let legs=runner.getElementsByClassName("leg")
+
+let phase=Math.sin(Date.now()/80)*30
 
 arms[0].style.transform="rotate("+phase+"deg)"
 arms[1].style.transform="rotate("+(-phase)+"deg)"
 
 legs[0].style.transform="rotate("+(-phase)+"deg)"
-legs[1].style.transform="rotate("+phase+"deg")
+legs[1].style.transform="rotate("+phase+"deg)"
 
 }
 
 function update(){
 
-if(finished)return
-
-speed1*=0.9
-speed2*=0.9
-
-pos1+=speed1*(stamina1/100)
-pos2+=speed2*(stamina2/100)
-
-if(stamina1<0)stamina1=0
-if(stamina2<0)stamina2=0
-
 document.getElementById("p1").style.left=pos1+"px"
 document.getElementById("p2").style.left=pos2+"px"
 
-let phase=Math.sin(Date.now()/80)*30
-
-animateRunner("p1",phase)
-animateRunner("p2",phase)
-
-document.getElementById("stam1").style.width=stamina1+"%"
-document.getElementById("stam2").style.width=stamina2+"%"
+animate("p1")
+animate("p2")
 
 if(pos1>=finish){
 finished=true
@@ -243,24 +175,17 @@ finished=true
 document.getElementById("result").innerText="プレイヤー2 勝利！"
 }
 
+requestAnimationFrame(update)
+
 }
 
-setInterval(update,30)
+update()
 
 function restart(){
 
 pos1=0
 pos2=0
-speed1=0
-speed2=0
-
-stamina1=100
-stamina2=100
-
 finished=false
-
-document.getElementById("p1").style.left="0px"
-document.getElementById("p2").style.left="0px"
 
 document.getElementById("result").innerText=""
 
