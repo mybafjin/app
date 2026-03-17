@@ -13,13 +13,11 @@ text-align:center;
 margin:0;
 }
 
-h1{
-margin:10px;
-}
+h1{margin:10px}
 
 #game{
 width:900px;
-height:200px;
+height:220px;
 margin:auto;
 background:#5dbb63;
 border:5px solid #333;
@@ -30,31 +28,60 @@ overflow:hidden;
 #ground{
 position:absolute;
 bottom:0;
-height:50px;
+height:60px;
 width:100%;
 background:#7a5230;
 }
 
 .runner{
 position:absolute;
-font-size:45px;
+width:60px;
+height:40px;
 }
 
-#p1{
-left:0;
-bottom:40px;
+.head{
+width:14px;
+height:14px;
+background:#ffd7b5;
+border-radius:50%;
+position:absolute;
+top:10px;
+left:45px;
 }
 
-#p2{
-left:0;
-bottom:90px;
+.body{
+width:30px;
+height:14px;
+background:#2c3e50;
+position:absolute;
+top:14px;
+left:15px;
+border-radius:4px;
 }
+
+.arm,.leg{
+width:18px;
+height:6px;
+background:#ffd7b5;
+position:absolute;
+transform-origin:left center;
+border-radius:3px;
+}
+
+.arm{top:12px}
+.leg{top:22px}
+
+.arm1{left:5px}
+.arm2{left:5px}
+
+.leg1{left:20px}
+.leg2{left:20px}
 
 #finish{
 position:absolute;
 right:0;
-height:100%;
 width:10px;
+height:100%;
 background:red;
 }
 
@@ -97,11 +124,25 @@ text-align:left;
 
 <div id="game">
 
-<div id="p1" class="runner">🪖</div>
-<div id="p2" class="runner">🪖</div>
+<div id="p1" class="runner">
+<div class="head"></div>
+<div class="body"></div>
+<div class="arm arm1"></div>
+<div class="arm arm2"></div>
+<div class="leg leg1"></div>
+<div class="leg leg2"></div>
+</div>
+
+<div id="p2" class="runner" style="bottom:90px">
+<div class="head"></div>
+<div class="body"></div>
+<div class="arm arm1"></div>
+<div class="arm arm2"></div>
+<div class="leg leg1"></div>
+<div class="leg leg2"></div>
+</div>
 
 <div id="finish"></div>
-
 <div id="ground"></div>
 
 <div id="controls">
@@ -153,6 +194,21 @@ stamina2-=0.5
 
 })
 
+function animateRunner(id,phase){
+
+let r=document.getElementById(id)
+
+let arms=r.getElementsByClassName("arm")
+let legs=r.getElementsByClassName("leg")
+
+arms[0].style.transform="rotate("+phase+"deg)"
+arms[1].style.transform="rotate("+(-phase)+"deg)"
+
+legs[0].style.transform="rotate("+(-phase)+"deg)"
+legs[1].style.transform="rotate("+phase+"deg")
+
+}
+
 function update(){
 
 if(finished)return
@@ -169,13 +225,10 @@ if(stamina2<0)stamina2=0
 document.getElementById("p1").style.left=pos1+"px"
 document.getElementById("p2").style.left=pos2+"px"
 
-let wiggle=Math.sin(Date.now()/70)*15
+let phase=Math.sin(Date.now()/80)*30
 
-document.getElementById("p1").style.transform=
-"rotate("+wiggle+"deg)"
-
-document.getElementById("p2").style.transform=
-"rotate("+wiggle+"deg)"
+animateRunner("p1",phase)
+animateRunner("p2",phase)
 
 document.getElementById("stam1").style.width=stamina1+"%"
 document.getElementById("stam2").style.width=stamina2+"%"
