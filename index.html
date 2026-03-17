@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ほふく前進レース</title>
+<title>兵士ほふく前進レース</title>
 
 <style>
 
 body{
 font-family:sans-serif;
-background:linear-gradient(#87ceeb,#e8f8ff);
+background:linear-gradient(#87ceeb,#dff6ff);
 text-align:center;
 margin:0;
 }
@@ -17,9 +17,9 @@ h1{margin:10px}
 
 #game{
 width:900px;
-height:220px;
+height:240px;
 margin:auto;
-background:#5dbb63;
+background:#6bbf59;
 border:5px solid #333;
 position:relative;
 overflow:hidden;
@@ -27,47 +27,57 @@ overflow:hidden;
 
 .runner{
 position:absolute;
-width:60px;
-height:40px;
+width:90px;
+height:50px;
 }
 
 #p1{bottom:40px}
-#p2{bottom:110px}
+#p2{bottom:120px}
 
 .head{
-width:14px;
-height:14px;
-background:#ffd7b5;
+width:16px;
+height:16px;
+background:#f2c6a0;
 border-radius:50%;
 position:absolute;
-top:10px;
-left:45px;
+top:12px;
+left:65px;
+}
+
+.helmet{
+width:18px;
+height:10px;
+background:#3b5d2a;
+border-radius:10px 10px 4px 4px;
+position:absolute;
+top:5px;
+left:64px;
 }
 
 .body{
-width:30px;
-height:14px;
-background:#2c3e50;
+width:40px;
+height:16px;
+background:#3d6b35;
 position:absolute;
-top:14px;
-left:15px;
-border-radius:4px;
+top:16px;
+left:25px;
+border-radius:5px;
 }
 
 .arm,.leg{
-width:18px;
-height:6px;
-background:#ffd7b5;
+width:28px;
+height:7px;
+background:#f2c6a0;
 position:absolute;
 transform-origin:left center;
-border-radius:3px;
+border-radius:4px;
 }
 
-.arm{top:12px}
-.leg{top:22px}
+.arm{top:16px}
+.leg{top:30px;background:#3d6b35}
 
-.arm1{left:5px}
-.arm2{left:5px}
+.arm1{left:0}
+.arm2{left:0}
 
 .leg1{left:20px}
 .leg2{left:20px}
@@ -99,17 +109,19 @@ button{
 margin-top:10px;
 padding:10px 20px;
 font-size:18px;
+cursor:pointer;
 }
 
 </style>
 </head>
 <body>
 
-<h1>ほふく前進レース</h1>
+<h1>兵士ほふく前進レース</h1>
 
 <div id="game">
 
 <div id="p1" class="runner">
+<div class="helmet"></div>
 <div class="head"></div>
 <div class="body"></div>
 <div class="arm arm1"></div>
@@ -119,6 +131,7 @@ font-size:18px;
 </div>
 
 <div id="p2" class="runner">
+<div class="helmet"></div>
 <div class="head"></div>
 <div class="body"></div>
 <div class="arm arm1"></div>
@@ -128,7 +141,6 @@ font-size:18px;
 </div>
 
 <div id="finish"></div>
-
 <div id="count"></div>
 
 </div>
@@ -140,7 +152,7 @@ font-size:18px;
 
 <h2 id="result"></h2>
 
-<button onclick="restart()">もう一度</button>
+<button onclick="restart()">もう一度レース</button>
 
 <script>
 
@@ -194,10 +206,11 @@ pos2+=8
 function animate(id){
 
 let r=document.getElementById(id)
+
 let arms=r.getElementsByClassName("arm")
 let legs=r.getElementsByClassName("leg")
 
-let phase=Math.sin(Date.now()/80)*30
+let phase=Math.sin(Date.now()/80)*35
 
 arms[0].style.transform="rotate("+phase+"deg)"
 arms[1].style.transform="rotate("+(-phase)+"deg)"
