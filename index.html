@@ -2,15 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>連打ハードルレース</title>
+<title>ほふく前進レース</title>
 
 <style>
 
 body{
-margin:0;
 font-family:sans-serif;
-background:linear-gradient(#87ceeb,#dff6ff);
+background:linear-gradient(#87ceeb,#e8f8ff);
 text-align:center;
+margin:0;
 }
 
 h1{
@@ -18,52 +18,36 @@ margin:10px;
 }
 
 #game{
-width:1000px;
-height:260px;
+width:900px;
+height:200px;
 margin:auto;
-background:#4CAF50;
+background:#5dbb63;
 border:5px solid #333;
 position:relative;
 overflow:hidden;
 }
 
-.track{
+#ground{
 position:absolute;
-bottom:60px;
+bottom:0;
+height:50px;
 width:100%;
-height:6px;
-background:white;
+background:#7a5230;
 }
 
 .runner{
 position:absolute;
-bottom:66px;
 font-size:45px;
 }
 
-.leg{
-position:absolute;
-width:8px;
-height:20px;
-background:#333;
-bottom:-15px;
+#p1{
+left:0;
+bottom:40px;
 }
 
-.leg.left{
-left:10px;
-}
-
-.leg.right{
-left:25px;
-}
-
-.hurdle{
-position:absolute;
-bottom:60px;
-width:12px;
-height:40px;
-background:white;
-border:2px solid #444;
+#p2{
+left:0;
+bottom:90px;
 }
 
 #finish{
@@ -72,6 +56,26 @@ right:0;
 height:100%;
 width:10px;
 background:red;
+}
+
+.bar{
+width:300px;
+height:15px;
+background:#ddd;
+margin:auto;
+margin-bottom:8px;
+}
+
+.fill{
+height:100%;
+background:#ff6666;
+width:100%;
+}
+
+button{
+padding:10px 20px;
+font-size:18px;
+cursor:pointer;
 }
 
 #controls{
@@ -85,61 +89,38 @@ font-size:14px;
 text-align:left;
 }
 
-button{
-margin-top:10px;
-font-size:18px;
-padding:10px 20px;
-cursor:pointer;
-}
-
-#result{
-font-size:28px;
-}
-
 </style>
 </head>
 <body>
 
-<h1>連打ハードルレース</h1>
+<h1>ほふく前進レース</h1>
 
 <div id="game">
 
-<div class="track"></div>
-
-<div id="runner1" class="runner">
-🙂
-<div class="leg left"></div>
-<div class="leg right"></div>
-</div>
-
-<div id="runner2" class="runner" style="bottom:120px;">
-😎
-<div class="leg left"></div>
-<div class="leg right"></div>
-</div>
-
-<div class="hurdle" style="left:350px"></div>
-<div class="hurdle" style="left:600px"></div>
-<div class="hurdle" style="left:800px"></div>
+<div id="p1" class="runner">🪖</div>
+<div id="p2" class="runner">🪖</div>
 
 <div id="finish"></div>
 
+<div id="ground"></div>
+
 <div id="controls">
-<b>操作方法</b><br><br>
-プレイヤー1<br>
-A：走る<br>
-W：ジャンプ<br><br>
-
-プレイヤー2<br>
-L：走る<br>
-I：ジャンプ
+<b>操作</b><br>
+プレイヤー1：Aキー連打<br>
+プレイヤー2：Lキー連打
 </div>
 
 </div>
+
+<p>プレイヤー1スタミナ</p>
+<div class="bar"><div id="stam1" class="fill"></div></div>
+
+<p>プレイヤー2スタミナ</p>
+<div class="bar"><div id="stam2" class="fill"></div></div>
 
 <h2 id="result"></h2>
 
-<button onclick="restart()">もう一度レース</button>
+<button onclick="restart()">もう一度</button>
 
 <script>
 
@@ -149,97 +130,55 @@ let pos2=0
 let speed1=0
 let speed2=0
 
-let y1=0
-let y2=0
-
-let vy1=0
-let vy2=0
+let stamina1=100
+let stamina2=100
 
 let finished=false
 
-const gravity=0.6
-const jumpPower=12
-const finish=950
-
-const hurdles=[350,600,800]
+const finish=820
 
 document.addEventListener("keydown",e=>{
 
 if(finished)return
 
-if(e.key==="a") speed1+=0.5
-if(e.key==="l") speed2+=0.5
+if(e.key==="a"){
+speed1+=0.7
+stamina1-=0.5
+}
 
-if(e.key==="w" && y1===0) vy1=jumpPower
-if(e.key==="i" && y2===0) vy2=jumpPower
+if(e.key==="l"){
+speed2+=0.7
+stamina2-=0.5
+}
 
 })
-
-function animateLegs(){
-
-let t=Date.now()/100
-
-document.querySelector("#runner1 .left").style.transform=
-`rotate(${Math.sin(t)*40}deg)`
-
-document.querySelector("#runner1 .right").style.transform=
-`rotate(${Math.sin(t+1)*40}deg)`
-
-document.querySelector("#runner2 .left").style.transform=
-`rotate(${Math.sin(t)*40}deg)`
-
-document.querySelector("#runner2 .right").style.transform=
-`rotate(${Math.sin(t+1)*40}deg)`
-
-}
-
-function checkHurdle(playerPos,playerY){
-
-for(let h of hurdles){
-
-if(
-playerPos>h-20 &&
-playerPos<h+10 &&
-playerY<20
-){
-return true
-}
-
-}
-
-return false
-
-}
 
 function update(){
 
 if(finished)return
 
-speed1*=0.95
-speed2*=0.95
+speed1*=0.9
+speed2*=0.9
 
-pos1+=speed1
-pos2+=speed2
+pos1+=speed1*(stamina1/100)
+pos2+=speed2*(stamina2/100)
 
-vy1-=gravity
-vy2-=gravity
+if(stamina1<0)stamina1=0
+if(stamina2<0)stamina2=0
 
-y1+=vy1
-y2+=vy2
+document.getElementById("p1").style.left=pos1+"px"
+document.getElementById("p2").style.left=pos2+"px"
 
-if(y1<0){y1=0;vy1=0}
-if(y2<0){y2=0;vy2=0}
+let wiggle=Math.sin(Date.now()/70)*15
 
-if(checkHurdle(pos1,y1)) speed1*=0.4
-if(checkHurdle(pos2,y2)) speed2*=0.4
+document.getElementById("p1").style.transform=
+"rotate("+wiggle+"deg)"
 
-document.getElementById("runner1").style.left=pos1+"px"
-document.getElementById("runner2").style.left=pos2+"px"
+document.getElementById("p2").style.transform=
+"rotate("+wiggle+"deg)"
 
-document.getElementById("runner1").style.bottom=(66+y1)+"px"
-document.getElementById("runner2").style.bottom=(120+y2)+"px"
-
-animateLegs()
+document.getElementById("stam1").style.width=stamina1+"%"
+document.getElementById("stam2").style.width=stamina2+"%"
 
 if(pos1>=finish){
 finished=true
@@ -259,20 +198,16 @@ function restart(){
 
 pos1=0
 pos2=0
-
 speed1=0
 speed2=0
 
-y1=0
-y2=0
-
-vy1=0
-vy2=0
+stamina1=100
+stamina2=100
 
 finished=false
 
-document.getElementById("runner1").style.left="0px"
-document.getElementById("runner2").style.left="0px"
+document.getElementById("p1").style.left="0px"
+document.getElementById("p2").style.left="0px"
 
 document.getElementById("result").innerText=""
 
